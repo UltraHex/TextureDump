@@ -12,15 +12,16 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.google.gson.stream.JsonWriter;
+import cpw.mods.fml.common.Loader;
+import cpw.mods.fml.common.ModContainer;
+import cpw.mods.fml.common.ModMetadata;
+import cpw.mods.fml.common.ProgressManager;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import mezz.texturedump.util.Log;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.ModContainer;
-import net.minecraftforge.fml.common.ModMetadata;
-import net.minecraftforge.fml.common.ProgressManager;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
 public class ModStatsDumper {
@@ -34,10 +35,10 @@ public class ModStatsDumper {
 	}
 
 	public void saveModStats(String name, TextureMap map, File outputFolder) {
-		Map<String, Long> modPixelCounts = map.mapUploadedSprites.values().stream()
+		Map<String, Long> modPixelCounts = (Map<String, Long>) map.mapUploadedSprites.values().stream()
 				.collect(Collectors.groupingBy(
-						sprite -> new ResourceLocation(sprite.getIconName()).getNamespace(),
-						Collectors.summingLong(sprite -> sprite.getIconWidth() * sprite.getIconHeight()))
+						sprite -> new ResourceLocation(((TextureAtlasSprite)sprite).getIconName()).getResourceDomain(),
+						Collectors.summingLong(sprite -> ((TextureAtlasSprite)sprite).getIconWidth() * ((TextureAtlasSprite)sprite).getIconHeight()))
 				);
 
 		final long totalPixels = modPixelCounts.values().stream().mapToLong(longValue -> longValue).sum();

@@ -6,10 +6,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.IntBuffer;
 
+import cpw.mods.fml.common.ProgressManager;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import mezz.texturedump.util.Log;
-import net.minecraftforge.fml.common.ProgressManager;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;

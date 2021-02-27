@@ -8,10 +8,12 @@ import java.io.StringWriter;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Collection;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.HashSet;
 
 import com.google.gson.stream.JsonWriter;
+import cpw.mods.fml.common.ProgressManager;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import mezz.texturedump.TextureDump;
 import mezz.texturedump.util.Log;
 import net.minecraft.client.Minecraft;
@@ -20,9 +22,6 @@ import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.resources.IResource;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.common.ProgressManager;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -30,9 +29,16 @@ import org.apache.commons.io.IOUtils;
 @SideOnly(Side.CLIENT)
 public class TextureInfoDumper {
 	public static void saveTextureInfo(String name, TextureMap map, int mipmapLevels, File outputFolder) {
-		Set<String> animatedTextures = map.listAnimatedSprites.stream()
-				.map(TextureAtlasSprite::getIconName)
-				.collect(Collectors.toSet());
+		//Set<String> animatedTextures = map.listAnimatedSprites.stream()
+		//		.map(TextureAtlasSprite::getIconName)
+		//		.collect(Collectors.toSet());
+
+		HashSet<String> animatedTextures = new HashSet<String>();
+
+		for (Object listAnimatedSprite : map.listAnimatedSprites) {
+			TextureAtlasSprite sprite = (TextureAtlasSprite)listAnimatedSprite;
+			animatedTextures.add(sprite.getIconName());
+		}
 
 		ProgressManager.ProgressBar progressBar = ProgressManager.push("Dumping TextureMap info to file", mipmapLevels + 1);
 
