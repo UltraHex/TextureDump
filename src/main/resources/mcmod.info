@@ -1,10 +1,10 @@
 [
 {
-  "modid": "texturedump",
-  "name": "Texture Dump",
+  "modid": "${modId}",
+  "name": "${modName}",
   "description": "Dumps the Minecraft Texture Atlas to file.",
-  "version": "${version}",
-  "mcversion": "${mcversion}",
+  "version": "${modVersion}",
+  "mcversion": "${minecraftVersion}",
   "url": "https://github.com/mezz/TextureDump",
   "updateUrl": "",
   "authorList": ["mezz", "LexManos", "AtomicBlom"],
