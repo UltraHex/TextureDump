@@ -1,4 +1,5 @@
-<html>
+<!--suppress HtmlUnknownTarget -->
+<html lang="en-US">
 <head>
     <script lang="JavaScript" src="[resourceDir]/fastdom.min.js" type="application/javascript"></script>
     <script lang="JavaScript" src="[resourceDir]/texturedump.js" type="application/javascript"></script>
@@ -8,6 +9,7 @@
     <link rel="stylesheet" href="custom.css" type="text/css"/>
     <script lang="JavaScript" src="[textureInfo]" type="application/javascript"></script>
     <script lang="JavaScript" src="[statisticsFile]" type="application/javascript"></script>
+    <title>Texture Dump</title>
 </head>
 <body>
 
@@ -24,13 +26,13 @@
 
         <div class="options">
             <div class="highlightSection">
-                <div class="shadowText">Highlight</div>
+                <label for="resourceDomains" class="shadowText">Highlight</label>
                 <select id="resourceDomains" onchange="highlightResourceDomain()"></select>
                 <div class="shadowText smaller" id="modPercentage">
                 </div>
             </div>
             <div class="backgroundSection">
-                <div class="shadowText">Background</div>
+                <label for="backgroundTypes" class="shadowText">Background</label>
                 <select id="backgroundTypes" onchange="updateBackground()">
                     <option value="rgba(119,119,119,1)">Gray</option>
                     <option value="url([resourceDir]/bg.png)">Checkerboard</option>
@@ -42,7 +44,7 @@
 
 <div id="sheetContainer">
     <div id="marker"></div>
-    <image id="sheet" src="[textureImage]"></image>
+    <img id="sheet" src="[textureImage]" alt="Texture Sheet">
     <canvas id="resourceDomainOverlay"></canvas>
 </div>
 

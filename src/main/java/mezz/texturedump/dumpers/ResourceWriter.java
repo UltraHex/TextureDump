@@ -1,6 +1,5 @@
 package mezz.texturedump.dumpers;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,9 +26,8 @@ public class ResourceWriter {
 
     public static void writeFiles(String name, Path outputFolder, Path mipmapsDir, List<Path> textureImagePaths,
         List<Path> textureInfoJsPaths, Path modStatsPath, Path resourceDir, int mipmapLevels) throws IOException {
-        ProgressManager.ProgressBar progressBar = ProgressManager.push(
-            "Writing TextureMap resources to files",
-            mipmapLevels);
+        ProgressManager.ProgressBar progressBar = ProgressManager
+            .push("Writing TextureMap resources to files", mipmapLevels);
 
         for (int level = 0; level < mipmapLevels; level++) {
             final Path htmlFile;
@@ -38,15 +36,15 @@ public class ResourceWriter {
             } else {
                 htmlFile = mipmapsDir.resolve(name + "_mipmap_" + level + ".html");
             }
-            progressBar.step(htmlFile.getFileName()
-                .toString());
+            progressBar.step(
+                htmlFile.getFileName()
+                    .toString());
 
             Path textureInfoJsFile = textureInfoJsPaths.get(level);
             Path textureImageFile = textureImagePaths.get(level);
 
-            String webPage = getResourceAsString("page.html").replaceAll(
-                    "\\[statisticsFile]",
-                    fileToRelativeHtmlPath(modStatsPath, outputFolder))
+            String webPage = getResourceAsString("page.html")
+                .replaceAll("\\[statisticsFile]", fileToRelativeHtmlPath(modStatsPath, outputFolder))
                 .replaceAll("\\[textureImage]", fileToRelativeHtmlPath(textureImageFile, outputFolder))
                 .replaceAll("\\[textureInfo]", fileToRelativeHtmlPath(textureInfoJsFile, outputFolder))
                 .replaceAll("\\[resourceDir]", fileToRelativeHtmlPath(resourceDir, outputFolder));
@@ -74,15 +72,16 @@ public class ResourceWriter {
         writeFileFromResource(resourceDir, "texturedump.backgrounds.css");
         IResourceManager resourceManager = Minecraft.getMinecraft()
             .getResourceManager();
-        final IResource resource = resourceManager.getResource(new ResourceLocation(TextureDump.MODID, "bg.png"));
+        final IResource resource = resourceManager.getResource(new ResourceLocation(TextureDump.MOD_ID, "bg.png"));
         final InputStream inputStream = resource.getInputStream();
         final OutputStream outputStream = Files.newOutputStream(resourceDir.resolve("bg.png"));
         IOUtils.copy(inputStream, outputStream);
     }
 
     private static void writeFileFromResource(Path outputFolder, String s) throws IOException {
-        FileWriter fileWriter = new FileWriter(outputFolder.resolve(s)
-            .toFile());
+        FileWriter fileWriter = new FileWriter(
+            outputFolder.resolve(s)
+                .toFile());
         fileWriter.write(getResourceAsString(s));
         fileWriter.close();
     }
@@ -90,7 +89,7 @@ public class ResourceWriter {
     private static String getResourceAsString(String resourceName) throws IOException {
         IResourceManager resourceManager = Minecraft.getMinecraft()
             .getResourceManager();
-        final IResource resource = resourceManager.getResource(new ResourceLocation(TextureDump.MODID, resourceName));
+        final IResource resource = resourceManager.getResource(new ResourceLocation(TextureDump.MOD_ID, resourceName));
         final InputStream inputStream = resource.getInputStream();
         StringWriter writer = new StringWriter();
         IOUtils.copy(inputStream, writer, Charset.defaultCharset());
