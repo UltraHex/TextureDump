@@ -43,11 +43,12 @@ public class ResourceWriter {
             Path textureInfoJsFile = textureInfoJsPaths.get(level);
             Path textureImageFile = textureImagePaths.get(level);
 
+            Path folder = level == 0 ? outputFolder : mipmapsDir;
             String webPage = getResourceAsString("page.html")
-                .replaceAll("\\[statisticsFile]", fileToRelativeHtmlPath(modStatsPath, outputFolder))
-                .replaceAll("\\[textureImage]", fileToRelativeHtmlPath(textureImageFile, outputFolder))
-                .replaceAll("\\[textureInfo]", fileToRelativeHtmlPath(textureInfoJsFile, outputFolder))
-                .replaceAll("\\[resourceDir]", fileToRelativeHtmlPath(resourceDir, outputFolder));
+                .replaceAll("\\[statisticsFile]", fileToRelativeHtmlPath(modStatsPath, folder))
+                .replaceAll("\\[textureImage]", fileToRelativeHtmlPath(textureImageFile, folder))
+                .replaceAll("\\[textureInfo]", fileToRelativeHtmlPath(textureInfoJsFile, folder))
+                .replaceAll("\\[resourceDir]", fileToRelativeHtmlPath(resourceDir, folder));
 
             FileWriter htmlFileWriter = new FileWriter(htmlFile.toFile());
             htmlFileWriter.write(webPage);
