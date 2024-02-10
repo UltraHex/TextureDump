@@ -1,27 +1,32 @@
 package mezz.texturedump;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
 
-import cpw.mods.fml.common.Mod;
-import cpw.mods.fml.common.event.FMLLoadCompleteEvent;
-import cpw.mods.fml.common.event.FMLPreInitializationEvent;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import mezz.texturedump.dumpers.ModStatsDumper;
-import mezz.texturedump.dumpers.TextureImageDumper;
-import mezz.texturedump.dumpers.TextureInfoDumper;
-import mezz.texturedump.util.Log;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiMainMenu;
 import net.minecraft.client.renderer.texture.ITextureObject;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.renderer.texture.TextureMap;
-import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.common.MinecraftForge;
+
+import cpw.mods.fml.common.Mod;
+import cpw.mods.fml.common.ProgressManager;
+import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+import mezz.texturedump.dumpers.ModStatsDumper;
+import mezz.texturedump.dumpers.ResourceWriter;
+import mezz.texturedump.dumpers.TextureImageDumper;
+import mezz.texturedump.dumpers.TextureInfoDumper;
+import mezz.texturedump.util.Log;
 
 @Mod(
 		modid = TextureDump.MODID,
@@ -61,42 +66,88 @@ public class TextureDump {
 
 	 */
 
+	@SideOnly(Side.CLIENT)
+	private static void dumpTextureMaps() throws IOException {
+		Path outputFolder = Paths.get("texture_dump");
+		outputFolder = Files.createDirectories(outputFolder);
+
+		TextureManager textureManager = Minecraft.getMinecraft().getTextureManager();
+
+		try {
+			Path mipmapsDir = createSubDirectory(outputFolder, "mipmaps");
+			Path resourceDir = createSubDirectory(outputFolder, "resources");
+			Path modStatsDir = createSubDirectory(outputFolder, "modStats");
+			Path texturesDir = createSubDirectory(outputFolder, "textures");
+			Path textureInfoDir = createSubDirectory(outputFolder, "textureInfo");
+			ResourceWriter.writeResources(resourceDir);
+
+			@SuppressWarnings("unchecked")
+			Map<ResourceLocation, ITextureObject> textureObjects = textureManager.mapTextureObjects;
+			ProgressManager.ProgressBar progressBar = ProgressManager.push(
+				"Dumping TextureMaps",
+				textureObjects.size());
+			for (Map.Entry<ResourceLocation, ITextureObject> entry : textureObjects.entrySet()) {
+				ITextureObject textureObject = entry.getValue();
+				if (textureObject instanceof TextureMap) {
+					String name = entry.getKey()
+						.toString()
+						.replace(':', '_')
+						.replace('/', '_');
+					progressBar.step(name);
+					dumpTextureMap(
+						(TextureMap) textureObject,
+						name,
+						outputFolder,
+						mipmapsDir,
+						resourceDir,
+						modStatsDir,
+						texturesDir,
+						textureInfoDir);
+				} else {
+					progressBar.step(textureObject.toString());
+				}
+			}
+			ProgressManager.pop(progressBar);
+		} catch (IOException e) {
+			Log.error("Failed to dump texture maps.", e);
+		}
+	}
+
+	private static void dumpTextureMap(TextureMap map, String name, Path outputFolder, Path mipmapsDir,
+		Path resourceDir, Path modStatsDir, Path texturesDir, Path textureInfoDir) {
+		try {
+			ModStatsDumper modStatsDumper = new ModStatsDumper();
+			Path modStatsPath = modStatsDumper.saveModStats(name, map, modStatsDir);
+
+			List<Path> textureImagePaths = TextureImageDumper.saveGlTextures(name, map.getGlTextureId(), texturesDir);
+			int mipmapLevels = textureImagePaths.size();
+			List<Path> textureInfoJsPaths = TextureInfoDumper.saveTextureInfoDataFiles(
+				name,
+				map,
+				mipmapLevels,
+				textureInfoDir);
+
+			ResourceWriter.writeFiles(name, outputFolder, mipmapsDir, textureImagePaths, textureInfoJsPaths, modStatsPath, resourceDir, mipmapLevels);
+		} catch (IOException e) {
+			Log.error(String.format("Failed to dump texture map: %s.", name), e);
+		}
+	}
+
+	public static Path createSubDirectory(Path outputFolder, String subfolderName) throws IOException {
+		Path subfolder = outputFolder.resolve(subfolderName);
+		return Files.createDirectories(subfolder);
+	}
+
 	@SubscribeEvent
 	@SideOnly(Side.CLIENT)
 	public void onMainMenuOpen(GuiOpenEvent event) {
 		if (!mainMenuOpened && event.gui instanceof GuiMainMenu) {
 			mainMenuOpened = true;
-			dumpTextureMaps();
-		}
-	}
-
-	@SideOnly(Side.CLIENT)
-	private static void dumpTextureMaps() {
-		TextureManager textureManager = Minecraft.getMinecraft().getTextureManager();
-		textureManager.mapTextureObjects.forEach((key, textureObject) -> {
-			if (textureObject instanceof TextureMap) {
-				String name = key.toString().replace(':', '_').replace('/', '_');
-				dumpTextureMap((TextureMap) textureObject, name);
-			}
-		});
-	}
-
-	@SideOnly(Side.CLIENT)
-	private static void dumpTextureMap(TextureMap map, String name) {
-		int mip = map.mipmapLevels;
-		File outputFolder = new File("texture_dump");
-		if (!outputFolder.exists()) {
-			if (!outputFolder.mkdir()) {
-				Log.error("Failed to create directory " + outputFolder);
-				return;
+			try {
+				dumpTextureMaps();
+			} catch (IOException e) {
+				Log.error("Failed to dump texture maps with error.", e);
 			}
 		}
-
-		TextureImageDumper.saveGlTexture(name, map.getGlTextureId(), mip, outputFolder);
-		TextureInfoDumper.saveTextureInfo(name, map, mip, outputFolder);
-
-		ModStatsDumper modStatsDumper = new ModStatsDumper();
-		modStatsDumper.saveModStats(name, map, outputFolder);
 	}
-
 }
